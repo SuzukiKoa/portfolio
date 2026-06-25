@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Unityで制作された3Dボスバトル弾幕アクションゲーム『Doughnut Danmaku』の技術ポートフォリオ。円形ステージクランプ、弾リンクレーザーシステムなどの独自の実装を解説します。">
+  <meta name="author" content="Suzuki Koa">
+  <title>Doughnut Danmaku - 3D Boss Battle Danmaku Action Portfolio</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <a href="#" class="logo">
+      <span class="logo-icon"></span>
+      Doughnut Danmaku
+    </a>
+    <button class="hamburger" aria-label="メニューを開く">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav>
+      <ul>
+        <li><a href="#overview" class="active">概要</a></li>
+        <li><a href="#features">独自システム</a></li>
+        <li><a href="#architecture">システム設計</a></li>
+        <li><a href="#code">技術ハイライト</a></li>
+        <li><a href="#sound">サウンドコンソール</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <span class="hero-tag">Unity 3D Danmaku Game Portfolio</span>
+      <h1>DOUGHNUT <span class="accent-1">DANMAKU</span></h1>
+      <p class="hero-desc">
+        円形（ドーナツ型）ステージの制限された立ち回りと、弾丸同士がレーザーで結ばれリアルタイムに伸縮・回転する「弾リンクシステム」を特徴とする3Dボスバトルアクションゲーム。
+      </p>
+      <div class="hero-actions">
+        <a href="#overview" class="btn btn-primary">ゲーム仕様を見る</a>
+        <button onclick="openImageModal('images/hero_banner.jpg')" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+          モック画像を表示
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Overview Section -->
+  <section id="overview">
+    <h2 class="section-title">プロジェクト概要</h2>
+    <div class="overview-grid">
+      <div class="overview-text">
+        <h3>ボスの激しい弾幕をかいくぐる、3D円形ボスアクション</h3>
+        <p>
+          本プロジェクトは、プレイヤーが円形（ドーナツ型）のステージ内で、ボスの激しい弾幕や移動制限レーザーをジャンプ・ダッシュ無敵回避などを駆使してかいくぐりながら、攻撃を叩き込んでボスを撃破することを目指す3D弾幕アクションゲームです。
+        </p>
+        <p>
+          各マネージャーのシングルトン設計による統括、プレイヤー制御数学、ボス攻撃時のデータ構造の統一、リアルタイムなベクトルの LookRotation によるレーザーリンク制御など、Unity/C#における設計・数学実装の両面から作り込んでいます。
+        </p>
+        <div class="overview-specs">
+          <div class="spec-card glass-panel">
+            <h4>開発環境</h4>
+            <p>Unity 2022.3 (C#)</p>
+          </div>
+          <div class="spec-card glass-panel">
+            <h4>ステージ形状</h4>
+            <p>ドーナツ型 (内径10 / 外径30)</p>
+          </div>
+          <div class="spec-card glass-panel">
+            <h4>主要コンポーネント</h4>
+            <p>9モジュール</p>
+          </div>
+          <div class="spec-card glass-panel">
+            <h4>ターゲット</h4>
+            <p>PC / WebGLデプロイ対応</p>
+          </div>
+        </div>
+      </div>
+      <div class="overview-img-container" onclick="openImageModal('images/bullet_link.jpg')" style="cursor: pointer;">
+        <img src="images/bullet_link.jpg" alt="Doughnut Danmaku 弾リンクレーザーシステム">
+        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--accent-cyan);">
+          🔍 クリックで拡大
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features Section -->
+  <section id="features" style="background: rgba(10, 15, 25, 0.3);">
+    <h2 class="section-title">独自ゲームシステム</h2>
+    <div class="features-grid">
+      <!-- Feature 1 -->
+      <div class="feature-card glass-panel cyan-top">
+        <div class="feature-icon">🍩</div>
+        <h3>円形ステージ位置クランプ</h3>
+        <p>
+          バトルフィールドは中心座標からの内径（10f）と外径（30f）で制限されています。プレイヤーは落下や無限の逃げが許されず、常にボスを中心とした同心円上で回避を行うため、緊迫感のある間合い管理が求められます。
+        </p>
+      </div>
+      <!-- Feature 2 -->
+      <div class="feature-card glass-panel pink-top">
+        <div class="feature-icon">⚡</div>
+        <h3>弾リンク・レーザーシステム</h3>
+        <p>
+          弾と弾の間に動的なレーザー判定線を張る機能。ボスが射出した複数の弾が移動すると、その間を繋ぐレーザーもリアルタイムで伸縮・回転。プレイヤーの移動経路を分断し、ダッシュ無敵やジャンプのタイミングを誘発します。
+        </p>
+      </div>
+      <!-- Feature 3 -->
+      <div class="feature-card glass-panel orange-top">
+        <div class="feature-icon">💥</div>
+        <h3>ボスHP連動フェーズ遷移</h3>
+        <p>
+          ボスの残りHP割合を監視し、段階的に攻撃パターンの発狂・強化を行います。UIの警告表示メッシュ（赤透過の扇形）と連動し、ボスの行動アルゴリズムが動的に切り替わります。
+        </p>
+      </div>
+      <!-- Feature 4 -->
+      <div class="feature-card glass-panel cyan-top">
+        <div class="feature-icon">🎥</div>
+        <h3>スマート追従カメラ</h3>
+        <p>
+          ボスとプレイヤーの相対距離を毎フレーム追従し、常に「プレイヤーの背後からボスを見据える」アングルに自動で回転・位置補正する lock-on カメラ。3D空間特有の視界不良による被弾を劇的に減らします。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- System Architecture Section -->
+  <section id="architecture">
+    <h2 class="section-title">クラス・システム連携設計</h2>
+    <p style="text-align: center; color: var(--text-secondary); max-width: 800px; margin: -20px auto 40px auto;">
+      本プロジェクトの各役割のクラス関係図です。SVG上のクラス名を選択すると、右パネルで機能の詳細やC#スクリプトの役割を確認できます。
+    </p>
+    <div class="architecture-container">
+      <div class="diag-canvas glass-panel">
+        <!-- Responsive interactive SVG -->
+        <svg class="diagram-svg" viewBox="0 0 600 500" width="100%">
+          <!-- Definitions for markers (arrows) -->
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(255,255,255,0.4)" />
+            </marker>
+          </defs>
+
+          <!-- SVG Paths (Lines connecting nodes) -->
+          <path d="M 300 50 L 300 90" class="diag-link" marker-end="url(#arrow)" />
+          <path d="M 300 50 L 150 90" class="diag-link" marker-end="url(#arrow)" />
+          <path d="M 300 50 L 450 90" class="diag-link" marker-end="url(#arrow)" />
+          
+          <path d="M 150 130 L 150 200" class="diag-link" marker-end="url(#arrow)" />
+          <path d="M 450 130 L 450 200" class="diag-link" marker-end="url(#arrow)" />
+
+          <path d="M 450 240 L 410 300" class="diag-link" marker-end="url(#arrow)" />
+          <path d="M 450 240 L 450 300" class="diag-link" marker-end="url(#arrow)" />
+          <path d="M 450 240 L 490 300" class="diag-link" marker-end="url(#arrow)" />
+
+          <path d="M 450 240 L 300 400" class="diag-link" marker-end="url(#arrow)" />
+          <path d="M 150 240 L 300 400" class="diag-link" marker-end="url(#arrow)" />
+
+          <!-- Interactive Node: GameController -->
+          <g class="diag-node sys-node" data-class="GameController" transform="translate(230, 10)">
+            <rect width="140" height="40" />
+            <text x="70" y="20">GameController</text>
+          </g>
+
+          <!-- Interactive Node: SoundManager -->
+          <g class="diag-node sys-node" data-class="SoundManager" transform="translate(80, 90)">
+            <rect width="140" height="40" />
+            <text x="70" y="20">SoundManager</text>
+          </g>
+
+          <!-- Interactive Node: BossManager -->
+          <g class="diag-node sys-node" data-class="BossManager" transform="translate(380, 90)">
+            <rect width="140" height="40" />
+            <text x="70" y="20">BossManager</text>
+          </g>
+
+          <!-- Interactive Node: PlayerController -->
+          <g class="diag-node" data-class="PlayerController" transform="translate(80, 200)">
+            <rect width="140" height="40" style="stroke: rgba(0, 242, 255, 0.4);" />
+            <text x="70" y="20">PlayerController</text>
+          </g>
+
+          <!-- Interactive Node: BossBase -->
+          <g class="diag-node boss-node" data-class="BossBase" transform="translate(380, 200)">
+            <rect width="140" height="40" style="stroke: rgba(255, 0, 123, 0.4);" />
+            <text x="70" y="20">BossBase (抽象クラス)</text>
+          </g>
+
+          <!-- Interactive Node: Boss1 -->
+          <g class="diag-node boss-node" data-class="Boss1" transform="translate(320, 300)">
+            <rect width="70" height="30" />
+            <text x="35" y="15">Boss1</text>
+          </g>
+
+          <!-- Interactive Node: Boss2 -->
+          <g class="diag-node boss-node" data-class="Boss2" transform="translate(415, 300)">
+            <rect width="70" height="30" />
+            <text x="35" y="15">Boss2</text>
+          </g>
+
+          <!-- Interactive Node: Boss3 -->
+          <g class="diag-node boss-node" data-class="Boss3" transform="translate(510, 300)">
+            <rect width="70" height="30" />
+            <text x="35" y="15">Boss3</text>
+          </g>
+
+          <!-- Interactive Node: BulletLinkLine -->
+          <g class="diag-node" data-class="BulletLinkLine" transform="translate(230, 400)">
+            <rect width="140" height="40" style="stroke: rgba(0, 242, 255, 0.4);" />
+            <text x="70" y="20">BulletLinkLine</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Right detail panel -->
+      <div class="diag-panel glass-panel" id="detailPanel">
+        <h3 id="detailsTitle">Class Details</h3>
+        <div class="class-path" id="detailsPath">Assets/Scripts/...</div>
+        <p class="class-desc" id="detailsDesc">連携図の中のモジュールをクリックすると、この部分に詳細な説明と主要メンバが表示されます。</p>
+        <div class="class-methods">
+          <h4>主要関数 / メンバ</h4>
+          <ul id="detailsMethods">
+            <li>連携図を選択してください。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Code Showcase Section -->
+  <section id="code" class="code-showcase">
+    <h2 class="section-title">技術コード解説</h2>
+    <div class="code-tabs">
+      <button class="tab-btn active" data-tab="tab-link">BulletLinkLine.cs (二点間追従数学)</button>
+      <button class="tab-btn" data-tab="tab-clamp">PlayerController.cs (円形範囲制限)</button>
+      <button class="tab-btn pink-tab" data-tab="tab-gostart">PlayerController.cs (放物線帰還)</button>
+    </div>
+
+    <div class="code-window">
+      <div class="code-header">
+        <div class="code-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="code-title">Unity C# Snippet</div>
+      </div>
+      <div class="code-content-wrapper">
+        <!-- Code Tab 1 -->
+        <div class="code-block-content active" id="tab-link">
+<pre><code><span class="c-co">// BulletLinkLine.cs - 二つの弾の座標をリアルタイム監視し、レーザーのコライダーを伸縮・回転</span>
+<span class="c-kw">void</span> <span class="c-fn">Update</span>()
+{
+    <span class="c-kw">if</span> (bulletA_ == <span class="c-kw">null</span> || bulletB_ == <span class="c-kw">null</span>)
+    {
+        <span class="c-fn">Destroy</span>(gameObject);
+        <span class="c-kw">return</span>;
+    }
+
+    Vector3 posA = bulletA_.transform.position;
+    Vector3 posB = bulletB_.transform.position;
+    Vector3 dir = posB - posA;
+
+    <span class="c-co">// ２点の中間座標を位置に指定</span>
+    transform.position = (posA + posB) * <span class="c-nm">0.5f</span>;
+
+    <span class="c-co">// LookRotationによりレーザーを相手弾の方向に向ける</span>
+    <span class="c-kw">if</span> (dir != Vector3.zero)
+    {
+        transform.rotation = Quaternion.<span class="c-fn">LookRotation</span>(dir);
+    }
+
+    <span class="c-co">// スケールを厚さおよび「二点間の距離 (magnitude)」に補正</span>
+    transform.localScale = <span class="c-kw">new</span> <span class="c-ty">Vector3</span>(thickness_, thickness_, dir.magnitude);
+}</code></pre>
+        </div>
+
+        <!-- Code Tab 2 -->
+        <div class="code-block-content" id="tab-clamp">
+<pre><code><span class="c-co">// PlayerController.cs - 同心円（ドーナツ型）ステージの境界内に自機を制限する</span>
+<span class="c-kw">private void</span> <span class="c-fn">ClampPositionToStage</span>()
+{
+    Vector3 relativePosition = transform.position - stageCenter_;
+    Vector3 horizontalRelativePos = <span class="c-kw">new</span> <span class="c-ty">Vector3</span>(relativePosition.x, <span class="c-nm">0f</span>, relativePosition.z);
+    <span class="c-kw">float</span> distanceFromCenter = horizontalRelativePos.magnitude;
+
+    <span class="c-co">// 中心点の例外回避</span>
+    <span class="c-kw">if</span> (distanceFromCenter == <span class="c-nm">0f</span>)
+    {
+        horizontalRelativePos = Vector3.forward * stageInnerRadius_;
+        transform.position = stageCenter_ + <span class="c-kw">new</span> <span class="c-ty">Vector3</span>(horizontalRelativePos.x, relativePosition.y, horizontalRelativePos.z);
+        <span class="c-kw">return</span>;
+    }
+
+    <span class="c-co">// 中心からの距離を最小半径と最大半径の間にクランプ</span>
+    <span class="c-kw">float</span> clampedDistance = Mathf.<span class="c-fn">Clamp</span>(distanceFromCenter, stageInnerRadius_, stageOuterRadius_);
+
+    <span class="c-co">// 距離が変わった（境界線を越えた）場合のみ再計算して適用</span>
+    <span class="c-kw">if</span> (clampedDistance != distanceFromCenter)
+    {
+        Vector3 clampedHorizontalPosition = horizontalRelativePos.normalized * clampedDistance;
+        transform.position = stageCenter_ + <span class="c-kw">new</span> <span class="c-ty">Vector3</span>(clampedHorizontalPosition.x, relativePosition.y, clampedHorizontalPosition.z);
+    }
+}</code></pre>
+        </div>
+
+        <!-- Code Tab 3 -->
+        <div class="code-block-content" id="tab-gostart">
+<pre><code><span class="c-co">// PlayerController.cs - 落下・離脱時に、放物線補間で初期地点へ自動回帰させる (Update処理)</span>
+<span class="c-kw">private void</span> <span class="c-fn">UpdateReturning</span>()
+{
+    returnTimer_ += Time.deltaTime;
+    <span class="c-kw">float</span> t = Mathf.<span class="c-fn">Clamp01</span>(returnTimer_ / returnDuration_);
+
+    <span class="c-co">// 水平位置の線形補間 (Lerp)</span>
+    Vector3 horizontalPosition = Vector3.<span class="c-fn">Lerp</span>(returnStartPosition_, startPosition_, t);
+
+    <span class="c-co">// 放物線（山なり）の高さ計算: y = 4 * height * t * (1 - t)</span>
+    <span class="c-kw">float</span> height = <span class="c-nm">4f</span> * parabolicHeight_ * t * (<span class="c-nm">1f</span> - t);
+
+    <span class="c-co">// 高さパラメータを加算して位置を適用</span>
+    transform.position = <span class="c-kw">new</span> <span class="c-ty">Vector3</span>(horizontalPosition.x, horizontalPosition.y + height, horizontalPosition.z);
+
+    <span class="c-co">// 進行方向へのスムースな回転</span>
+    Vector3 moveDirection = (startPosition_ - returnStartPosition_);
+    moveDirection.y = <span class="c-nm">0f</span>;
+    <span class="c-kw">if</span> (moveDirection != Vector3.zero)
+    {
+        Quaternion targetRot = Quaternion.<span class="c-fn">LookRotation</span>(moveDirection, Vector3.up);
+        transform.rotation = Quaternion.<span class="c-fn">RotateTowards</span>(transform.rotation, targetRot, Mathf.Infinity * Time.deltaTime);
+    }
+
+    <span class="c-co">// 帰還完了時</span>
+    <span class="c-kw">if</span> (returnTimer_ >= returnDuration_)
+    {
+        transform.position = startPosition_;
+        transform.rotation = startRotation_;
+        isReturning_ = <span class="c-kw">false</span>;
+    }
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Sound Console Section -->
+  <section id="sound">
+    <h2 class="section-title">音響・連動システムコンソール</h2>
+    <p style="text-align: center; color: var(--text-secondary); max-width: 800px; margin: -20px auto 40px auto;">
+      ゲーム内の SoundManager 挙動を Web Audio API を用いてエミュレートしたインタラクティブコンソール。BGMを選択して再生し、効果音（SE）を鳴らすと、上部のリアルタイム波形描画領域に反映されます。
+    </p>
+
+    <div class="sound-console-grid">
+      <!-- Sound Controls -->
+      <div class="console-interface glass-panel">
+        <div class="console-header">
+          <div class="console-title">Audio Synthesizer Unit</div>
+          <div class="led-indicator">
+            <span class="led-dot" id="ledDot" style="background:#6b7280; box-shadow:none;"></span>
+            <span id="consoleStatus">OFFLINE (インタラクトで起動)</span>
+          </div>
+        </div>
+
+        <!-- Master Power -->
+        <div class="console-row">
+          <button id="startConsoleBtn" class="btn btn-primary" style="width: 100%;">
+            🔌 オーディオシステムを初期化
+          </button>
+        </div>
+
+        <!-- BGM Selector -->
+        <div class="console-row">
+          <h4>BGM シーケンサー (BGM Playback)</h4>
+          <div class="console-bgm-panel">
+            <div class="console-controls">
+              <button id="btnBgmTitle" class="console-btn">Title Screen</button>
+              <button id="btnBgmSelect" class="console-btn">Stage Select</button>
+              <button id="btnBgmBoss" class="console-btn btn-cyan">Boss Battle</button>
+              <button id="btnBgmStop" class="console-btn active">BGM OFF</button>
+            </div>
+            <!-- BGM modifier -->
+            <div class="console-controls" style="margin-top: 5px;">
+              <button id="btnPhase2" class="console-btn" style="border-color:var(--accent-orange); color:var(--accent-orange); width: 100%;">
+                PHASE CHANGE (第二形態/倍速テンポ)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SE triggers -->
+        <div class="console-row">
+          <h4>効果音発声 (Sound Effects Pool)</h4>
+          <div class="console-controls">
+            <button id="btnSeLaser" class="console-btn">弾レーザー発射 (Laser)</button>
+            <button id="btnSeDash" class="console-btn">無敵ダッシュ (Dash)</button>
+            <button id="btnSeHit" class="console-btn">ボス被弾 (Hit)</button>
+            <button id="btnSeWarning" class="console-btn" style="border-color:var(--accent-orange); color:var(--accent-orange);">危険予兆アラーム (Warning)</button>
+          </div>
+        </div>
+
+        <!-- Volume -->
+        <div class="slider-container">
+          <label for="volumeSlider">Volume</label>
+          <input type="range" id="volumeSlider" class="console-slider" min="0" max="0.5" step="0.05" value="0.2">
+        </div>
+      </div>
+
+      <!-- Realtime Canvas Visualizer -->
+      <div class="visualizer-card glass-panel">
+        <canvas id="visualizer" class="visualizer-canvas"></canvas>
+        <div class="visualizer-meta">
+          <span>Channel: Master Output</span>
+          <div class="sys-active-state" id="sysActiveState">
+            <span class="sys-state-dot off"></span> SYSTEM INACTIVE
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-content">
+      <div class="logo footer-logo">
+        <span class="logo-icon"></span>
+        Doughnut Danmaku
+      </div>
+      <div class="footer-links">
+        <a href="#overview">プロジェクト概要</a>
+        <a href="#features">独自システム</a>
+        <a href="#architecture">システム設計</a>
+        <a href="#code">コード解説</a>
+      </div>
+      <p class="copyright">
+        &copy; 2026 Suzuki Koa. Crafted for Game Portfolio. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Lightbox Modal for Images -->
+  <div class="modal" id="mediaModal">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="閉じる">&times;</button>
+      <img src="" alt="Modal Zoom View" class="modal-img" id="modalImage">
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
